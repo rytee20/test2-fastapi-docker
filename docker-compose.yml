@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: postgres:16.3
+    container_name: postgre-db
+    restart: always
+    ports: 
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres 
+      POSTGRES_PASSWORD: qwerty22
+      POSTGRES_DB: users_achievements
+    volumes:
+      - postgres_data:/var/lib/postgresql/new_data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - fastapi_network
+
+  app:
+    build: .
+    container_name: fastapi-app
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    ports: 
+      - "8000:8000"
+    networks:
+      - fastapi_network
+    depends_on:
+      - db
+
+  web:
+    image: nginx:latest
+    container_name: nginx-web
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - fastapi_network
+    depends_on:
+      - app
+
+
+networks:
+  fastapi_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
